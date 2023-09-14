@@ -18,6 +18,8 @@ using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.SkillDefinition;
 using Microsoft.SemanticKernel.Skills.OpenAPI.Model;
 using Microsoft.SemanticKernel.Skills.OpenAPI.OpenApi;
+using Microsoft.SemanticKernel.Audit;
+using Microsoft.SemanticKernel.Security;
 
 namespace Microsoft.SemanticKernel.Skills.OpenAPI.Extensions;
 
@@ -360,12 +362,19 @@ public static class KernelAIPluginExtensions
                     ServerUrlOverride = executionParameters?.ServerUrlOverride,
                     ApiHostUrl = documentUri is not null ? new Uri(documentUri.GetLeftPart(UriPartial.Authority)) : null
                 };
+                ILogger<IKernel> auditLogger = AuditLoggerFactory.GetLogger();
+
+                SecurityConnector securityConnector = new SecurityConnector(new SecurityConnector.SecurityContext(operation.Method.ToString(), operation.ServerUrl.ToString(), operation.Path, arguments));
+                securityConnector.PreRestApiServiceCallback();
 
                 var result = await runner.RunAsync(operation, arguments, options, cancellationToken).ConfigureAwait(false);
 
                 if (result != null)
                 {
                     context.Variables.Update(result.ToString());
+
+                    securityConnector.securityContext.result = result;
+                    securityConnector.PostRestApiServiceCallback();
                 }
             }
             catch (Exception ex) when (!ex.IsCriticalException())
