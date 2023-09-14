@@ -11,6 +11,7 @@ using Microsoft.SemanticKernel.Diagnostics;
 using Microsoft.SemanticKernel.Http;
 using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.Orchestration;
+using Microsoft.SemanticKernel.Security;
 using Microsoft.SemanticKernel.SemanticFunctions;
 using Microsoft.SemanticKernel.Services;
 using Microsoft.SemanticKernel.SkillDefinition;
@@ -51,6 +52,8 @@ public sealed class Kernel : IKernel, IDisposable
 
     /// <inheritdoc/>
     public IDelegatingHandlerFactory HttpHandlerFactory => this._httpHandlerFactory;
+
+    public ISecurityConnector SecurityConnector { get; set; }
 
     /// <summary>
     /// Kernel constructor. See KernelBuilder for an easier and less error prone approach to create kernel instances.
@@ -239,6 +242,8 @@ public sealed class Kernel : IKernel, IDisposable
         // ReSharper disable once SuspiciousTypeConversion.Global
         if (this._skillCollection is IDisposable reg) { reg.Dispose(); }
     }
+
+
 
     #region private ================================================================================
 

@@ -364,8 +364,12 @@ public static class KernelAIPluginExtensions
                 };
                 ILogger<IKernel> auditLogger = AuditLoggerFactory.GetLogger();
 
-                SecurityConnector securityConnector = new SecurityConnector(new SecurityConnector.SecurityContext(operation.Method.ToString(), operation.ServerUrl.ToString(), operation.Path, arguments));
-                securityConnector.PreRestApiServiceCallback();
+                if (kernel.SecurityConnector == null)
+                {
+                    kernel.SecurityConnector = new SecurityConnector(new SecurityContext(operation.Method.ToString(), operation.ServerUrl.ToString(), operation.Path, arguments));
+                }
+
+                kernel.SecurityConnector.PreRestApiServiceCallback();
 
                 var result = await runner.RunAsync(operation, arguments, options, cancellationToken).ConfigureAwait(false);
 
@@ -373,8 +377,8 @@ public static class KernelAIPluginExtensions
                 {
                     context.Variables.Update(result.ToString());
 
-                    securityConnector.securityContext.result = result;
-                    securityConnector.PostRestApiServiceCallback();
+                    kernel.SecurityConnector.securityContext.result = result;
+                    kernel.SecurityConnector.PostRestApiServiceCallback();
                 }
             }
             catch (Exception ex) when (!ex.IsCriticalException())

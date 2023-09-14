@@ -11,6 +11,7 @@ using Microsoft.SemanticKernel.SemanticFunctions;
 using Microsoft.SemanticKernel.Services;
 using Microsoft.SemanticKernel.SkillDefinition;
 using Microsoft.SemanticKernel.TemplateEngine;
+using Microsoft.SemanticKernel.Security;
 
 namespace Microsoft.SemanticKernel;
 
@@ -43,6 +44,11 @@ public interface IKernel
     /// Reference to Http handler factory
     /// </summary>
     IDelegatingHandlerFactory HttpHandlerFactory { get; }
+
+    /// <summary>
+    /// Reference to a security connector for security controls
+    /// </summary>
+    ISecurityConnector SecurityConnector { get; set; }
 
     /// <summary>
     /// Build and register a function in the internal skill collection, in a global generic skill.

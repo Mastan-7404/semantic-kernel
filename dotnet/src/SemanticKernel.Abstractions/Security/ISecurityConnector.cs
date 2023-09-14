@@ -7,6 +7,7 @@ namespace Microsoft.SemanticKernel.Security;
 /// </summary>
 public interface ISecurityConnector
 {
+    SecurityContext securityContext { get; set; }
     /// <summary>
     /// Use this callback for auditing and parameter validation before making an API call.
     /// </summary>
