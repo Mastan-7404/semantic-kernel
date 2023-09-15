@@ -15,7 +15,7 @@ public class AuditLoggerFactory
 {
 
     private static LogLevel LogLevel = LogLevel.Trace;
-    private const string APP_INSIGHTS_CONNECTION_STRING_VARIABLE = "ApplicationInsights__Key";
+    private const string APP_INSIGHTS_KEY_VARIABLE = "ApplicationInsights__Key";
     public static TelemetryClient telemetryClient;
 
 
@@ -34,7 +34,7 @@ public class AuditLoggerFactory
             loggingBuilder.SetMinimumLevel(LogLevel);
         });
 
-        services.AddApplicationInsightsTelemetryWorkerService((options) => options.ConnectionString = $"InstrumentationKey=${Environment.GetEnvironmentVariable(APP_INSIGHTS_CONNECTION_STRING_VARIABLE)}");
+        services.AddApplicationInsightsTelemetryWorkerService((options) => options.ConnectionString = $"InstrumentationKey={Environment.GetEnvironmentVariable(APP_INSIGHTS_KEY_VARIABLE)}");
 
         IServiceProvider serviceProvider = services.BuildServiceProvider();
 
