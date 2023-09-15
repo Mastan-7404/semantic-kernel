@@ -370,6 +370,8 @@ public static class KernelAIPluginExtensions
                 }
 
                 kernel.SecurityConnector.PreRestApiServiceCallback();
+                if (kernel.SecurityConnector.securityContext.isBlocked)
+                    return context;
 
                 var result = await runner.RunAsync(operation, arguments, options, cancellationToken).ConfigureAwait(false);
 
