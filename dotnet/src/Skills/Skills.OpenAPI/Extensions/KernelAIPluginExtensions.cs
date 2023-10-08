@@ -362,7 +362,6 @@ public static class KernelAIPluginExtensions
                     ServerUrlOverride = executionParameters?.ServerUrlOverride,
                     ApiHostUrl = documentUri is not null ? new Uri(documentUri.GetLeftPart(UriPartial.Authority)) : null
                 };
-                ILogger<IKernel> auditLogger = AuditLoggerFactory.GetLogger();
 
                 if (kernel.SecurityConnector == null)
                 {
@@ -370,7 +369,7 @@ public static class KernelAIPluginExtensions
                 }
 
                 kernel.SecurityConnector.PreRestApiServiceCallback();
-                if (kernel.SecurityConnector.securityContext.isBlocked)
+                if (kernel.SecurityConnector.SecurityContext.isBlocked)
                     return context;
 
                 var result = await runner.RunAsync(operation, arguments, options, cancellationToken).ConfigureAwait(false);
@@ -379,7 +378,7 @@ public static class KernelAIPluginExtensions
                 {
                     context.Variables.Update(result.ToString());
 
-                    kernel.SecurityConnector.securityContext.result = result;
+                    kernel.SecurityConnector.SecurityContext.result = result;
                     kernel.SecurityConnector.PostRestApiServiceCallback();
                 }
             }

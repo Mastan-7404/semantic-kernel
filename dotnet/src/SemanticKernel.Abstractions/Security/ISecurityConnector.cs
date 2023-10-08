@@ -7,7 +7,7 @@ namespace Microsoft.SemanticKernel.Security;
 /// </summary>
 public interface ISecurityConnector
 {
-    SecurityContext securityContext { get; set; }
+    SecurityContext SecurityContext { get; set; }
     /// <summary>
     /// Use this callback for auditing and parameter validation before making an API call.
     /// </summary>
@@ -16,4 +16,8 @@ public interface ISecurityConnector
     /// Use this callback for response validation after making an API call.
     /// </summary>
     public void PostRestApiServiceCallback();
+    /// <summary>
+    /// Method for clean up and flushing the buffers. Must call this before exiting the application.
+    /// </summary>
+    public void Close();
 }

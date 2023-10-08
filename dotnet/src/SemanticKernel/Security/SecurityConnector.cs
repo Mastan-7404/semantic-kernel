@@ -1,8 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel.Audit;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.ApplicationInsights;
+using Microsoft.SemanticKernel.Audit;
 
 namespace Microsoft.SemanticKernel.Security;
 
@@ -12,61 +12,71 @@ namespace Microsoft.SemanticKernel.Security;
 /// </summary>
 public class SecurityConnector : ISecurityConnector
 {
-    private static ILogger<IKernel> auditLogger = AuditLoggerFactory.GetLogger();
-    public SecurityContext securityContext { get; set; }
+    private TelemetryClient auditTelemetryClient;
+    public SecurityContext SecurityContext { get; set; }
     private BlackListService blackListService;
 
     public SecurityConnector(SecurityContext securityContext)
     {
-        this.securityContext = securityContext;
+        this.SecurityContext = securityContext;
+        this.auditTelemetryClient = AuditTelemetryClientFactory.GetTelemetryClient();
         this.blackListService = new();
+    }
+
+    ~SecurityConnector()
+    {
+        // This is a hack. There needs to be a more elegant way to flush the telemetry client.
+        Close();
     }
 
     public void PreRestApiServiceCallback()
     {
+        var preApiCallContextParameters = new Dictionary<string, string>
+        {
+            { "operation", SecurityContext.operation },
+            { "arguments", string.Join(",", SecurityContext.arguments) },
+            { "serverUrl", SecurityContext.serverUrl},
+            { "apiPath", SecurityContext.path}
+        };
         // TODO: Add connector logic
-        Console.WriteLine("Checking if the endpoint is black-listed");
+        auditTelemetryClient.TrackEvent("Pre REST API call", preApiCallContextParameters);
 
-        if(blackListService.isBlackListed(securityContext.serverUrl))
+        Console.WriteLine($"Checking if the url {SecurityContext.serverUrl} is black-listed");
+
+        if(blackListService.isBlackListed(SecurityContext.serverUrl))
         {
-            securityContext.isBlocked = true;
-            AuditLoggerFactory.telemetryClient.TrackEvent("Blocked the REST API call", new Dictionary<string, string>
-        {
-            { "operation", securityContext.operation },
-            { "arguments", string.Join(",", securityContext.arguments) },
-            { "serverUrl", securityContext.serverUrl},
-            { "apiPath", securityContext.path}
-        });
+            SecurityContext.isBlocked = true;
+            auditTelemetryClient.TrackEvent("Blocked the REST API call", preApiCallContextParameters);
             Console.WriteLine("Endpoint is black-listed. Blocked the endpoint!");
 
-            AuditLoggerFactory.flushChannel();
             return;
         }
 
         Console.WriteLine("Allowing the endpoint!");
-
-        AuditLoggerFactory.telemetryClient.TrackEvent("Pre REST API call", new Dictionary<string, string>
-        {
-            { "operation", securityContext.operation },
-            { "arguments", string.Join(",", securityContext.arguments) },
-            { "serverUrl", securityContext.serverUrl},
-            { "apiPath", securityContext.path}
-        });
-        AuditLoggerFactory.flushChannel();
     }
 
     public void PostRestApiServiceCallback()
     {
-        AuditLoggerFactory.telemetryClient.TrackEvent("Post REST API call", new Dictionary<string, string>
+        auditTelemetryClient.TrackEvent("Post REST API call", new Dictionary<string, string>
         {
-            { "result", securityContext.result.ToString() }
+            { "result", SecurityContext.result.ToString() }
         });
-        AuditLoggerFactory.flushChannel();
     }
 
-    private bool isBlackListed(string url)
+    private bool IsBlackListed(string url)
     {
         return blackListService.isBlackListed(url);
+    }
+
+    public void Close()
+    {
+        FlushTelemetryClient();
+    }
+
+    private void FlushTelemetryClient()
+    {
+        auditTelemetryClient.Flush();
+        Task.Delay(5000).Wait();
     }
 }
 
